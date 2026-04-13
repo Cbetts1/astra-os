@@ -17,6 +17,11 @@ on:
   pull_request:
     branches: [ "**" ]
 
+# Minimal read-only permissions — this workflow only builds and uploads
+# artefacts; it does not need write access to the repository.
+permissions:
+  contents: read
+
 jobs:
   build-and-validate:
     name: Build, Verify & Boot
