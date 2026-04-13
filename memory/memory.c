@@ -1,44 +1,53 @@
 /*
- * AstraOS Memory Manager - Stub Implementation
+ * AstraOS Memory Manager
  *
- * This file is a placeholder for the full memory management subsystem.
+ * Initialises the Physical Memory Manager from the Multiboot memory map
+ * and provides a simple bump-pointer heap allocator for kernel use.
  *
- * Planned implementation phases:
- *   Phase 1 - Physical Memory Manager
- *     - Parse the Multiboot memory map to find usable RAM regions.
- *     - Maintain a bitmap of free/used physical page frames (4 KiB each).
- *     - Expose pmm_alloc_frame() / pmm_free_frame().
- *
- *   Phase 2 - Paging / VMM
- *     - Build initial page directory and page tables.
- *     - Identity-map the kernel and VGA buffer.
- *     - Enable CR0.PG to activate paging.
- *
- *   Phase 3 - Kernel Heap
- *     - Implement kmalloc() / kfree() using a slab or buddy allocator
- *       backed by the VMM.
+ * The heap region lives in a static array.  This is intentionally simple
+ * for v0.2; a slab or buddy allocator will replace it when virtual memory
+ * is enabled.
  */
 
 #include "memory.h"
+#include "pmm.h"
 
-void memory_init(void)
+/* ------------------------------------------------------------------ */
+/*  Bump-pointer heap                                                   */
+/* ------------------------------------------------------------------ */
+
+#define HEAP_SIZE  (256 * 1024)  /* 256 KiB static kernel heap */
+
+static uint8_t  heap_area[HEAP_SIZE] __attribute__((aligned(16)));
+static uint32_t heap_offset = 0;
+
+/* ------------------------------------------------------------------ */
+/*  Public API                                                          */
+/* ------------------------------------------------------------------ */
+
+void memory_init(const multiboot_info_t *mbi, uint32_t kernel_end_phys)
 {
-    /*
-     * TODO: Parse multiboot memory map passed from kernel_main.
-     * TODO: Initialise physical memory bitmap.
-     * TODO: Set up page directory and enable paging.
-     */
+    pmm_init(mbi, kernel_end_phys);
 }
 
 void *kmalloc(size_t size)
 {
-    /* TODO: Implement kernel heap allocator */
-    (void)size;
-    return (void *)0;
+    /* Align to 16 bytes */
+    size = (size + 15u) & ~15u;
+
+    if (heap_offset + size > HEAP_SIZE) {
+        /* Caller must handle NULL; kernel_panic would need kprintf
+         * which may not be available early, so just return NULL */
+        return (void *)0;
+    }
+
+    void *ptr = (void *)(heap_area + heap_offset);
+    heap_offset += (uint32_t)size;
+    return ptr;
 }
 
 void kfree(void *ptr)
 {
-    /* TODO: Implement kernel heap free */
+    /* Bump allocator does not support individual free */
     (void)ptr;
 }

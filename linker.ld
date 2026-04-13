@@ -4,6 +4,9 @@
  * Lays out the kernel ELF sections starting at 1 MiB (0x100000),
  * which is the conventional load address for x86 kernels loaded
  * by Multiboot-compliant bootloaders.
+ *
+ * kernel_end is exported so the Physical Memory Manager knows where
+ * the kernel image ends and free physical memory begins.
  */
 
 ENTRY(_start)
@@ -33,4 +36,10 @@ SECTIONS {
         *(COMMON)
         *(.bss)
     }
+
+    /*
+     * kernel_end marks the first byte after all kernel sections.
+     * The PMM uses this to avoid allocating frames in use by the kernel.
+     */
+    kernel_end = .;
 }

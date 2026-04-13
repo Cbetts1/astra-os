@@ -1,17 +1,18 @@
 # ============================================================
-#  AstraOS Build System
+#  AstraOS Build System — v0.2
 #
 #  Requirements:
-#    - i686-elf cross-compiler toolchain (gcc, as, ld)
+#    - i686-elf cross-compiler toolchain (gcc, as, ld)  OR
+#      i686-linux-gnu-gcc (Debian/Ubuntu cross-compiler package)
 #    - grub-mkrescue + xorriso
 #    - qemu-system-i386
 #
 #  Targets:
-#    make          - build the kernel binary
-#    make iso      - build a bootable ISO image
-#    make run      - build ISO and launch in QEMU (graphical)
-#    make run-serial - build ISO and launch in QEMU (serial console)
-#    make clean    - remove all build artefacts
+#    make              - build the kernel binary
+#    make iso          - build a bootable ISO image
+#    make run          - build ISO and launch in QEMU (graphical)
+#    make run-serial   - build ISO and launch in QEMU (serial to stdout)
+#    make clean        - remove all build artefacts
 # ============================================================
 
 # ---------- Toolchain --------------------------------------------------
@@ -29,18 +30,18 @@ else
 endif
 
 # ---------- Flags ------------------------------------------------------
-CFLAGS  := -std=gnu99 \
-           -ffreestanding \
-           -O2 \
-           -Wall \
-           -Wextra \
+CFLAGS  := -std=gnu99        \
+           -ffreestanding    \
+           -O2               \
+           -Wall             \
+           -Wextra           \
            -fno-stack-protector \
            -fno-builtin
 
-LDFLAGS := -ffreestanding \
-           -O2 \
-           -nostdlib \
-           -no-pie \
+LDFLAGS := -ffreestanding    \
+           -O2               \
+           -nostdlib         \
+           -no-pie           \
            -Wl,--build-id=none \
            -lgcc
 
@@ -50,14 +51,22 @@ ISO_IMAGE  := astra-os.iso
 ISO_DIR    := isodir
 
 # ---------- Source files -----------------------------------------------
-C_SOURCES := kernel/kernel.c   \
-             drivers/vga.c     \
-             memory/memory.c   \
-             interrupts/interrupts.c \
-             process/scheduler.c \
+C_SOURCES := kernel/kernel.c          \
+             kernel/kprintf.c         \
+             drivers/vga.c            \
+             drivers/serial.c         \
+             drivers/pit.c            \
+             drivers/keyboard.c       \
+             memory/memory.c          \
+             memory/pmm.c             \
+             interrupts/interrupts.c  \
+             interrupts/pic.c         \
+             interrupts/idt.c         \
+             process/scheduler.c      \
              fs/vfs.c
 
-ASM_SOURCES := boot/boot.s
+ASM_SOURCES := boot/boot.s            \
+               interrupts/isr.s
 
 OBJECTS := $(C_SOURCES:.c=.o) $(ASM_SOURCES:.s=.o)
 
@@ -73,7 +82,7 @@ $(KERNEL_BIN): $(OBJECTS) linker.ld
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# ---------- Assemble boot stub -----------------------------------------
+# ---------- Assemble boot stub and ISR stubs ---------------------------
 %.o: %.s
 	$(AS) $< -o $@
 
@@ -90,10 +99,26 @@ iso: $(KERNEL_BIN)
 run: iso
 	qemu-system-i386 -cdrom $(ISO_IMAGE)
 
-# ---------- Run in QEMU (serial console - useful for headless CI) ------
+# ---------- Run in QEMU (serial to stdout — useful for headless CI) ----
 .PHONY: run-serial
 run-serial: iso
-	qemu-system-i386 -cdrom $(ISO_IMAGE) -nographic -serial stdio
+	qemu-system-i386 -cdrom $(ISO_IMAGE) \
+	  -nographic \
+	  -serial stdio \
+	  -no-reboot
+
+# ---------- CI validation: run, capture serial log, verify output ------
+.PHONY: test
+test: iso
+	timeout 10 qemu-system-i386 \
+	  -cdrom $(ISO_IMAGE) \
+	  -nographic \
+	  -serial stdio \
+	  -no-reboot \
+	  -display none 2>/dev/null | tee /tmp/astra-boot.log || true
+	@grep -q "AstraOS" /tmp/astra-boot.log && \
+	  echo "VALIDATION PASS: AstraOS banner found in serial output" || \
+	  echo "VALIDATION FAIL: banner not found"
 
 # ---------- Clean up ---------------------------------------------------
 .PHONY: clean
