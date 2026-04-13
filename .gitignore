@@ -1,0 +1,18 @@
+# Build artefacts
+*.o
+*.bin
+*.iso
+isodir/
+
+# Editor / IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS metadata
+.DS_Store
+
+# Cross-compiler sysroot (if placed in-tree)
+sysroot/
