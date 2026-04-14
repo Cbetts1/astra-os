@@ -14,7 +14,6 @@
 
 /* PS/2 I/O ports */
 #define KB_DATA_PORT    0x60
-#define KB_STATUS_PORT  0x64
 
 /* Input buffer — power-of-two size for cheap modulo via mask */
 #define KB_BUF_SIZE   64
