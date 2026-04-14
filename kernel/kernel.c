@@ -14,6 +14,7 @@
 
 #include "kernel.h"
 #include "kprintf.h"
+#include "gdt.h"
 #include "../drivers/vga.h"
 #include "../drivers/serial.h"
 #include "../drivers/pit.h"
@@ -33,7 +34,7 @@ extern uint32_t kernel_end;
 /*  Panic                                                               */
 /* ------------------------------------------------------------------ */
 
-void kernel_panic(const char *msg)
+__attribute__((noreturn)) void kernel_panic(const char *msg)
 {
     interrupts_disable();
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_RED);
@@ -176,6 +177,7 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi)
     print_banner();
 
     /* --- Step 4: interrupt subsystem (IDT + PIC) ------------------- */
+    gdt_init();
     interrupts_init();
     status_ok("Interrupt subsystem (IDT + 8259A PIC)");
 
@@ -218,8 +220,8 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi)
         if (sec != last_sec) {
             last_sec = sec;
             serial_puts("[TICK] uptime=");
-            /* manual decimal print to serial to avoid full kprintf overhead */
-            char buf[13]; /* max 10 digits + 's' + '\n' + '\0' */
+            /* manual decimal print to serial; buf holds max 10 digits + 's' + '\n' + '\0' */
+            char buf[13];
             int  i = 0;
             uint32_t v = sec;
             if (v == 0) { buf[i++] = '0'; }

@@ -56,7 +56,9 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi);
  * kernel_panic - Print an error message and halt the system
  *
  * @msg:  Null-terminated message string
+ *
+ * This function never returns.
  */
-void kernel_panic(const char *msg);
+__attribute__((noreturn)) void kernel_panic(const char *msg);
 
 #endif /* KERNEL_H */

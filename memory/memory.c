@@ -11,6 +11,7 @@
 
 #include "memory.h"
 #include "pmm.h"
+#include "../kernel/kernel.h"
 
 /* ------------------------------------------------------------------ */
 /*  Bump-pointer heap                                                   */
@@ -36,9 +37,7 @@ void *kmalloc(size_t size)
     size = (size + 15u) & ~15u;
 
     if (heap_offset + size > HEAP_SIZE) {
-        /* Caller must handle NULL; kernel_panic would need kprintf
-         * which may not be available early, so just return NULL */
-        return (void *)0;
+        kernel_panic("kmalloc: kernel heap exhausted");
     }
 
     void *ptr = (void *)(heap_area + heap_offset);

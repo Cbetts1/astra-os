@@ -53,6 +53,7 @@ ISO_DIR    := isodir
 # ---------- Source files -----------------------------------------------
 C_SOURCES := kernel/kernel.c          \
              kernel/kprintf.c         \
+             kernel/gdt.c             \
              drivers/vga.c            \
              drivers/serial.c         \
              drivers/pit.c            \
