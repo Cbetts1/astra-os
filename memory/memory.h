@@ -26,7 +26,7 @@ void memory_init(const multiboot_info_t *mbi, uint32_t kernel_end_phys);
 
 /*
  * Allocate `size` bytes from the kernel heap (bump allocator).
- * Never returns NULL — calls kernel_panic() on out-of-memory.
+ * Returns NULL if the heap is exhausted; callers must check the return value.
  */
 void *kmalloc(size_t size);
 

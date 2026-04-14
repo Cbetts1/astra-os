@@ -129,6 +129,7 @@ isr_common_stub:
     add  $4, %esp              /* discard frame pointer argument        */
 
     pop  %ds                   /* restore data segment                  */
+    mov  $0x10, %ax            /* reload kernel DS selector into ax     */
     mov  %ax,   %es
     mov  %ax,   %fs
     mov  %ax,   %gs
@@ -155,6 +156,7 @@ irq_common_stub:
     add  $4, %esp
 
     pop  %ds
+    mov  $0x10, %ax            /* reload kernel DS selector into ax     */
     mov  %ax,   %es
     mov  %ax,   %fs
     mov  %ax,   %gs
