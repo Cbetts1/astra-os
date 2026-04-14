@@ -34,4 +34,12 @@ void pic_send_eoi(uint8_t irq);
 void pic_set_mask(uint8_t irq);
 void pic_clear_mask(uint8_t irq);
 
+/*
+ * pic_read_isr - read both PICs' In-Service Register
+ *
+ * Returns a 16-bit value: bits [7:0] = master ISR, bits [15:8] = slave ISR.
+ * Used to detect spurious IRQs before sending EOI.
+ */
+uint16_t pic_read_isr(void);
+
 #endif /* PIC_H */

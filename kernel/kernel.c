@@ -14,6 +14,7 @@
 
 #include "kernel.h"
 #include "kprintf.h"
+#include "gdt.h"
 #include "../drivers/vga.h"
 #include "../drivers/serial.h"
 #include "../drivers/pit.h"
@@ -33,7 +34,7 @@ extern uint32_t kernel_end;
 /*  Panic                                                               */
 /* ------------------------------------------------------------------ */
 
-void kernel_panic(const char *msg)
+__attribute__((noreturn)) void kernel_panic(const char *msg)
 {
     interrupts_disable();
     vga_set_color(VGA_COLOR_WHITE, VGA_COLOR_RED);
@@ -176,6 +177,7 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi)
     print_banner();
 
     /* --- Step 4: interrupt subsystem (IDT + PIC) ------------------- */
+    gdt_init();
     interrupts_init();
     status_ok("Interrupt subsystem (IDT + 8259A PIC)");
 

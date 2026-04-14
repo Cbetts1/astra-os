@@ -130,6 +130,30 @@ void irq_handler(interrupt_frame_t *frame)
 {
     uint8_t irq = (uint8_t)(frame->int_no - PIC_MASTER_OFFSET);
 
+    /*
+     * Detect and discard spurious IRQs.
+     *
+     * A spurious IRQ7 occurs when the master PIC raises a phantom interrupt
+     * (e.g. due to a noise glitch).  The ISR bit 7 will NOT be set, so we
+     * must skip the handler and, critically, skip the EOI to master.
+     *
+     * A spurious IRQ15 occurs the same way on the slave.  The master *did*
+     * receive a real cascade signal on IR2, so we must acknowledge the master
+     * (using IRQ2) but skip the handler and the slave EOI.
+     */
+    if (irq == 7) {
+        uint16_t isr = pic_read_isr();
+        if (!(isr & (1u << 7))) {
+            return; /* spurious IRQ7 — no EOI to master */
+        }
+    } else if (irq == 15) {
+        uint16_t isr = pic_read_isr();
+        if (!(isr & (1u << 15))) {
+            pic_send_eoi(2); /* spurious IRQ15 — EOI to master only (cascade) */
+            return;
+        }
+    }
+
     if (irq < NUM_IRQS && irq_handlers[irq]) {
         irq_handlers[irq](frame);
     }

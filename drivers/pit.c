@@ -82,7 +82,7 @@ void pit_sleep_ms(uint32_t ms)
     /* Each tick is 1000/PIT_FREQUENCY_HZ milliseconds */
     uint32_t ticks_needed = (ms * PIT_FREQUENCY_HZ + 999) / 1000;
     uint32_t end = ticks + ticks_needed;
-    while (ticks < end) {
+    while ((int32_t)(end - ticks) > 0) {
         __asm__ volatile ("hlt");
     }
 }

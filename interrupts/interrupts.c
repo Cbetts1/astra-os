@@ -15,6 +15,7 @@ void interrupts_init(void)
 {
     pic_init();
     idt_init();
+    pic_clear_mask(2);  /* unmask cascade line so slave IRQs 8-15 can fire */
 }
 
 void interrupts_enable(void)

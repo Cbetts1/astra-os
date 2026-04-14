@@ -40,6 +40,7 @@
 #define MCR_LOOP     0x10   /* Loopback mode (self-test)             */
 
 /* Line Status Register bits */
+#define LSR_DATA_READY 0x01   /* Received data available               */
 #define LSR_TX_EMPTY 0x20   /* Transmit Holding Register Empty       */
 #define LSR_THRE     0x40   /* Transmitter Empty                     */
 
@@ -91,6 +92,11 @@ int serial_init(void)
     outb(SERIAL_COM1 + SERIAL_MODEM_CTRL,
          MCR_DTR | MCR_RTS | MCR_OUT2 | MCR_LOOP);
     outb(SERIAL_COM1 + SERIAL_DATA, 0xAE);
+
+    /* Wait for the loopback byte to be received */
+    while (!(inb(SERIAL_COM1 + SERIAL_LINE_STATUS) & LSR_DATA_READY)) {
+        __asm__ volatile ("pause");
+    }
 
     if (inb(SERIAL_COM1 + SERIAL_DATA) != 0xAE) {
         return 0; /* Hardware not present or broken */

@@ -22,6 +22,7 @@
 
 /* Commands */
 #define PIC_EOI       0x20   /* End-Of-Interrupt                    */
+#define PIC_OCW3_ISR  0x0B   /* OCW3: read In-Service Register      */
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
@@ -112,4 +113,11 @@ void pic_clear_mask(uint8_t irq)
     }
     val = inb(port) & (uint8_t)~(1u << irq);
     outb(port, val);
+}
+
+uint16_t pic_read_isr(void)
+{
+    outb(PIC_MASTER_CMD, PIC_OCW3_ISR);
+    outb(PIC_SLAVE_CMD,  PIC_OCW3_ISR);
+    return (uint16_t)((inb(PIC_SLAVE_CMD) << 8) | inb(PIC_MASTER_CMD));
 }
