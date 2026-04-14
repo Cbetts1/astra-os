@@ -211,8 +211,6 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi)
     kputs("  Uptime: ");
 
     uint32_t last_sec = 0;
-    uint32_t uptime_col = 10; /* approximate column of the uptime number */
-    (void)uptime_col;
 
     for (;;) {
         uint32_t ticks = pit_get_ticks();
@@ -222,8 +220,8 @@ void kernel_main(uint32_t magic, const multiboot_info_t *mbi)
         if (sec != last_sec) {
             last_sec = sec;
             serial_puts("[TICK] uptime=");
-            /* manual decimal print to serial to avoid full kprintf overhead */
-            char buf[12];
+            /* manual decimal print to serial; buf holds max 10 digits + 's' + '\n' + '\0' */
+            char buf[13];
             int  i = 0;
             uint32_t v = sec;
             if (v == 0) { buf[i++] = '0'; }
